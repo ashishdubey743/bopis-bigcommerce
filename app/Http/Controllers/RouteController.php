@@ -29,8 +29,8 @@ class RouteController extends Controller
             $array = explode('/', $storeHash);
             $storeHash = $array[1];
             $email = $data['user']['email'];
-            Log::debug('StoreHash: ' . $storeHash);
-            Log::debug('AccessToken: ' . $accessToken);
+
+            self::createScript($storeHash, $accessToken, 'app.js');
         } else {
             // Handle non-200 response
             $statusCode = $response->status();
@@ -38,6 +38,21 @@ class RouteController extends Controller
             // Handle or log the error appropriately
             Log::error("Error obtaining OAuth2 token - Status Code: $statusCode, Message: $errorMessage");
         }
+    }
+
+    public function createScript($storeHash, $accessToken, $file){
+        $payload = array(
+            'name' => "app.js",
+            'description' => "This will be centralised js file in project",
+            'src' => env('AppUrl').'/js/'.$file,
+            'auto_uninstall' => true, 
+            'location' => 'footer',
+            'visibility' => 'all_pages',
+            'kind' => 'src',
+        );
+        $response = Http::withHeaders(['X-Auth-Token' => $accessToken])->post('https://api.bigcommerce.com/stores/'.$storeHash.'/v3/content/scripts', $payload, [
+            'exceptions' => false
+        ]);
     }
 
     public function load(){
